@@ -1,81 +1,112 @@
-# 🧠 MicroWiki — мини-вики платформа на микросервисной архитектуре
+# MicroWiki — микросервисная вики-платформа
 
-Учебный проект для практики DevOps-инструментов, микросервисной архитектуры и CI/CD. Реализует простую платформу вики-статей с комментариями, авторизацией и мониторингом.
+## 🧰 Стек
 
-## 📦 Архитектура
+<p>
+  <img src="https://img.shields.io/badge/Python-FastAPI-3776AB?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Go-1.20-00ADD8?logo=go&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kubernetes-K8s-326CE5?logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kafka-EventBus-231F20?logo=apachekafka&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-DB-336791?logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white" />
+  <img src="https://img.shields.io/badge/Grafana-Monitoring-F46800?logo=grafana&logoColor=white" />
+  <img src="https://img.shields.io/badge/VirtualBox-VMs-183A61?logo=virtualbox&logoColor=white" />
+</p>
 
-Микросервисная архитектура, развернутая в Kubernetes-кластере на локальных виртуалках Ubuntu (VirtualBox). CI/CD обеспечивается через GitHub Actions + Ansible.
+---
 
-**Компоненты:**
+## 📌 Описание
 
-- **Frontend**: простой HTML/React-интерфейс
-- **API Gateway**: NGINX
-- **Article Service** (Python/FastAPI)
-- **Comment Service** (Python/FastAPI)
-- **Auth Service** (Go)
-- **Event Bus**: Kafka
-- **Cache**: Redis
-- **Database**: PostgreSQL
-- **Monitoring**: VictoriaMetrics + Grafana + Node Exporter
-- **CI/CD**: GitHub Actions + Docker + Ansible
+**MicroWiki** — это мини-вики-платформа с микросервисной архитектурой, включающая:
 
-## 🛠️ Стек технологий
+- статьи, редактирование и история версий  
+- комментарии и авторизация  
+- события через Kafka и кэш через Redis  
+- сбор метрик, логов и алертов  
+- автосборка и деплой через GitHub Actions
 
-| Категория     | Технология                      |
-|---------------|----------------------------------|
-| Backend       | Python (FastAPI), Go             |
-| Orchestration | Kubernetes (kubeadm, VirtualBox) |
-| CI/CD         | GitHub Actions, Docker, Ansible  |
-| Database      | PostgreSQL                       |
-| Caching       | Redis                            |
-| Messaging     | Kafka                            |
-| Monitoring    | VictoriaMetrics, Grafana         |
-| Virtualization| VirtualBox (Ubuntu 20.04)        |
+Разворачивается локально в кластере **Kubernetes**, собранном на **VirtualBox**-машинах с помощью **Ansible**.
 
-## 📂 Структура проекта
+---
 
+## ⚙️ Архитектура
+
+<details>
+<summary>📐 Диаграмма</summary>
+
+```text
+User
+ │
+ ▼
+Frontend (React/HTML)
+ │
+ ▼
+API Gateway (NGINX)
+ ├────────▶ Article Service (FastAPI)
+ ├────────▶ Comment Service (FastAPI)
+ └────────▶ Auth Service (Go)
+
+        └─▶ PostgreSQL
+        └─▶ Redis (кэш)
+        └─▶ Kafka (события)
+        └─▶ VictoriaMetrics + Grafana (мониторинг)
+```
+</details>
+
+## 📁 Структура проекта
 ```
 micro-wiki/
 ├── services/
-│ ├── article-service/ # FastAPI
-│ ├── comment-service/ # FastAPI
-│ └── auth-service/ # Go
-├── charts/ # Helm чарты
-├── ansible/ # Playbooks
-├── k8s/ # YAML-манифесты Kubernetes
-├── .github/
-│ └── workflows/
-│ └── ci.yml # CI/CD pipeline (GitHub Actions)
-├── README.md
-└── docs/
+│   ├── article-service/      # FastAPI
+│   ├── comment-service/      # FastAPI
+│   └── auth-service/         # Go
+├── k8s/                      # YAML-манифесты Kubernetes
+├── charts/                   # Helm чарты (опционально)
+├── ansible/                  # Автоматизация установки
+├── .github/workflows/ci.yml  # CI/CD pipeline (GitHub Actions)
+└── README.md
 ```
 
+## 🚀 Развертывание
+1. Локальные VM (VirtualBox)    
+    - 3 виртуалки Ubuntu 20.04  
+    - По 2 vCPU и 2–3 GB RAM  
+    - NAT + Host-only сети  
 
-## ⚙️ Развертывание (локально)
+2. Kubernetes (через Ansible)  
+    ```bash
+    ansible-playbook ansible/setup-k8s.yaml -i ansible/inventory.ini
+    ```
 
-### 1. Виртуалки (VirtualBox)
+3. Helm-зависимости
+    ```bash
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm install kafka bitnami/kafka
+    helm install redis bitnami/redis
+    helm install postgresql bitnami/postgresql
+    ```
 
-- 3 VM с Ubuntu 20.04
-- Ресурсы: 2 CPU, 2–3 GB RAM каждая
-- Сети: NAT + Host-only
+4. CI/CD через GitHub Actions
+    - Workflow: `.github/workflows/ci.yml`
+    - Автоматически:
+      - билд Docker-образов
+      - пуш в Docker Hub (или локальный registry)
+      - деплой в кластер через kubectl / ansible
 
-### 2. Kubernetes (через Ansible)
+## 📊 Мониторинг
+  - 📈 Grafana: `http://<vm-ip>:3000`
+  - Метрики из: `Node Exporter`, `VictoriaMetrics` приложений
 
-```bash
-ansible-playbook ansible/setup-k8s.yaml -i ansible/inventory.ini
-```
+## 🧪 Разработка
+Пример запуска FastAPI-сервиса локально:
+  ```
+cd services/article-service
+uvicorn main:app --reload --port 8001
+  ```
 
-### 3. Установка зависимостей (Helm)
-```
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install kafka bitnami/kafka
-helm install redis bitnami/redis
-helm install postgresql bitnami/postgresql
-```
-
-### 4. CI/CD (GitHub Actions)
-> При push в main запускается GitHub Actions pipeline
-> Автоматически:
-	- билдятся Docker-образы
-	- пушатся в Docker Hub
-	- деплоятся в кластер (через Ansible и kubectl)
+## 📌 Roadmap
+  - [ ] История редактирования статей через Kafka events
+  - [ ] Авторизация через OAuth2 / OpenID
+  - [ ] Live-комментарии через WebSocket
